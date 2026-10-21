@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Student Data Structures Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E8EFEA;
+  --panel:#F8FAF7;
+  --ink:#17302A;
+  --muted:#5B7168;
+  --line:#C9D6CE;
+  --pine:#1F6F5C;
+  --pine-dark:#14503F;
+  --sage:#8FBFA9;
+  --mist:#D8E6DD;
+  --amber:#F2A900;
+  --amber-soft:#FCEBB8;
+  --coral:#C8553D;
+  --coral-soft:#F6DCD5;
+  --head:"Bricolage Grotesque","Trebuchet MS",sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--body);font-size:15px;line-height:1.5;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3{font-family:var(--head);margin:0;letter-spacing:-.01em}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+/* Header */
+.top{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;
+  padding:22px clamp(16px,4vw,40px) 8px;
+}
+.brand h1{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.05}
+.brand p{margin:6px 0 0;color:var(--muted);max-width:52ch}
+.top-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+.seg{display:inline-flex;background:var(--mist);border-radius:999px;padding:4px}
+.seg button{
+  border:0;background:transparent;padding:8px 18px;border-radius:999px;
+  font-weight:600;cursor:pointer;color:var(--muted);
+}
+.seg button[aria-pressed="true"]{background:var(--pine);color:#fff}
+
+.btn{
+  border:1.5px solid var(--pine);background:transparent;color:var(--pine-dark);
+  padding:9px 16px;border-radius:10px;font-weight:600;cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.btn:hover{background:var(--mist)}
+.btn.primary{background:var(--pine);color:#fff}
+.btn.primary:hover{background:var(--pine-dark)}
+.btn.danger{border-color:var(--coral);color:var(--coral)}
+.btn.danger:hover{background:var(--coral-soft)}
+.btn.small{padding:5px 12px;font-size:13px;border-radius:8px}
+
+/* Layout */
+.layout{
+  display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;
+  padding:14px clamp(16px,4vw,40px) 40px;align-items:start;
+}
+@media (max-width:920px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.side{display:grid;gap:20px}
+.card h2{font-size:19px;font-weight:700;margin-bottom:12px}
+
+/* Form */
+.field{display:grid;gap:5px;margin-bottom:12px}
+.field label{font-weight:600;font-size:14px}
+.field input,.field select{
+  width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;background:#fff;
+}
+.field input:focus,.field select:focus{border-color:var(--pine)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.hint{color:var(--muted);font-size:13px;margin:10px 0 0}
+.error{
+  display:none;margin:0 0 12px;padding:9px 11px;border-radius:9px;
+  background:var(--coral-soft);color:#7C2A18;font-size:14px;
+}
+.error.on{display:block}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0}
+.stats div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stats dt{font-size:13px;color:var(--muted)}
+.stats dd{margin:0;font-family:var(--head);font-size:24px;font-weight:700}
+.stats dd.sm{font-size:16px;padding-top:5px}
+
+/* Tree canvas */
+.tree-card{padding:0;overflow:hidden}
+.tree-head{
+  display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;
+  padding:16px 18px;border-bottom:1px solid var(--line);
+}
+.tree-head h2{margin:0}
+.status{color:var(--muted);font-size:14px}
+.status b{color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);padding:10px 18px;border-bottom:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.canvas{
+  overflow:auto;min-height:340px;max-height:560px;
+  background-color:#FBFCFA;
+  background-image:
+    linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:28px 28px;background-position:-1px -1px;
+}
+.canvas svg{display:block;margin:0 auto}
+.empty{
+  min-height:340px;display:grid;place-content:center;justify-items:center;gap:12px;
+  text-align:center;padding:24px;background:#FBFCFA;
+}
+.empty p{margin:0;max-width:34ch;color:var(--muted)}
+
+/* SVG parts */
+.edge{stroke:#7C978B;stroke-width:2;fill:none}
+.edge.hot{stroke:var(--amber);stroke-width:3.5}
+.node{cursor:pointer}
+.node circle.body{stroke:var(--ink);stroke-width:2;transition:fill .2s,stroke .2s}
+.node.hi circle.body{fill:var(--pine);}
+.node.mid circle.body{fill:var(--sage)}
+.node.lo circle.body{fill:var(--mist)}
+.node.hi text.reg{fill:#fff}
+.node text.reg{font-family:var(--head);font-weight:700;fill:var(--ink)}
+.node text.nm{font-size:11.5px;fill:var(--muted);font-family:var(--body)}
+.node.seen circle.body{stroke:var(--amber);stroke-width:4}
+.node.now circle.body{stroke:var(--amber);stroke-width:6;fill:var(--amber-soft)}
+.node.now text.reg{fill:var(--ink)}
+.node.found circle.body{stroke:var(--pine-dark);stroke-width:6;fill:var(--amber)}
+.node.fresh{animation:pop .5s ease-out}
+@keyframes pop{0%{opacity:0}60%{opacity:1}100%{opacity:1}}
+.bf rect{fill:#fff;stroke:var(--line)}
+.bf text{font-size:11px;font-weight:700;fill:var(--muted);font-family:var(--body)}
+.bf.bad rect{fill:var(--coral);stroke:var(--coral)}
+.bf.bad text{fill:#fff}
+
+/* Tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:4px;margin:20px 0 0}
+.tabs button{
+  border:1px solid var(--line);border-bottom:0;background:var(--mist);color:var(--muted);
+  padding:10px 16px;border-radius:10px 10px 0 0;font-weight:600;cursor:pointer;
+}
+.tabs button[aria-selected="true"]{background:var(--panel);color:var(--ink)}
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:0 14px 14px 14px;padding:18px;
+}
+.panel[hidden]{display:none}
+.panel h3{font-size:17px;margin-bottom:4px}
+.panel .sub{margin:0 0 14px;color:var(--muted);font-size:14px}
+
+/* Traversals */
+.trav{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:10px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.trav:first-of-type{border-top:0}
+.trav b{display:block;font-family:var(--head)}
+.trav small{color:var(--muted)}
+@media (max-width:680px){.trav{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:2px 9px;font-weight:600;
+  transition:background .2s,border-color .2s;
+}
+.chip.on{border-color:var(--amber);background:var(--amber-soft)}
+.chip.now{border-color:var(--ink);background:var(--amber)}
+.none{color:var(--muted);font-style:italic}
+
+/* Heap */
+.top1{
+  display:flex;flex-wrap:wrap;gap:16px;align-items:center;
+  background:var(--pine);color:#fff;border-radius:12px;padding:16px 18px;margin-bottom:16px;
+}
+.top1 .big{font-family:var(--head);font-size:44px;font-weight:800;line-height:1}
+.top1 p{margin:0}
+.top1 small{opacity:.85}
+.rank{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:8px}
+.rank li{
+  display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;
+  background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;
+}
+.rank .pos{font-family:var(--head);font-weight:800;color:var(--pine)}
+.bar{height:6px;background:var(--mist);border-radius:6px;margin-top:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pine)}
+.heaparr{display:flex;flex-wrap:wrap;gap:6px}
+.heaparr div{background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:4px 10px;text-align:center;font-size:13px}
+.heaparr div b{display:block;font-family:var(--head)}
+.heaparr div span{color:var(--muted);font-size:11px}
+
+/* Trie */
+.search-box{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.search-box input{flex:1;min-width:200px;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;background:#fff}
+.matches{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.matches li{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.matches mark{background:var(--amber-soft);color:inherit;border-radius:3px;padding:0 1px;font-weight:700}
+.tag{background:var(--mist);border-radius:6px;padding:1px 8px;font-size:12px;font-weight:600;color:var(--pine-dark)}
+
+/* Log */
+.log{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:280px;overflow:auto}
+.log li{padding:8px 12px;border-radius:9px;background:#fff;border:1px solid var(--line);font-size:14px}
+.log li.rot{background:var(--amber-soft);border-color:var(--amber)}
+.log li.del{background:var(--coral-soft);border-color:var(--coral)}
+
+/* Toast */
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-weight:600;
+  transition:opacity .2s,transform .2s;z-index:10;max-width:92vw;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.hctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.hctl select,.hctl input{padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff}
+.hctl input{width:140px}
+.fn{background:var(--mist);border-radius:10px;padding:10px 14px;margin:0 0 14px;font-weight:600}
+.buckets{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.bk{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;min-height:64px}
+.bk.col{border-color:var(--coral)}
+.bk.hit{border-color:var(--amber);background:var(--amber-soft)}
+.bk .ix{font-family:var(--head);font-weight:800;color:var(--pine);font-size:13px}
+.bk .it{font-size:13px;margin-top:3px}
+.bk small{color:var(--muted)}
+.dtab{width:100%;border-collapse:collapse;font-size:14px;margin-top:12px}
+.dtab th,.dtab td{text-align:left;padding:6px 10px;border-top:1px solid var(--line)}
+.dsvg{width:100%;height:auto;max-width:620px;display:block;background:#FBFCFA;border:1px solid var(--line);border-radius:12px}
+.de{stroke:#7C978B;stroke-width:2}.de.path{stroke:var(--amber);stroke-width:5}
+.dn circle{fill:#fff;stroke:var(--ink);stroke-width:2}.dn.done circle{fill:var(--sage)}
+.dn.cur circle{fill:var(--amber)}.dn.end circle{fill:var(--pine)}.dn.end text.t{fill:#fff}
+.dn text{font-size:11.5px;font-weight:700;text-anchor:middle;fill:var(--ink)}
+.dn text.d{fill:var(--muted);font-size:12px}
+.dw{font-size:12px;font-weight:700;fill:var(--coral);text-anchor:middle}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1>Student Data Structures Lab</h1>
+    <p>Store students by register number and watch the same records sit in a BST, an AVL tree, a heap, a trie and a hash table. Then run Dijkstra on a campus map.</p>
+  </div>
+  <div class="top-actions">
+    <div class="seg" role="group" aria-label="Tree type">
+      <button id="modeAvl" aria-pressed="true">AVL tree</button>
+      <button id="modeBst" aria-pressed="false">Plain BST</button>
+    </div>
+    <button class="btn" id="loadSample">Load sample</button>
+    <button class="btn" id="loadSorted">Load sorted sample</button>
+    <button class="btn danger" id="clearAll">Clear all</button>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="side">
+    <section class="card">
+      <h2>Student record</h2>
+      <p class="error" id="err" role="alert"></p>
+      <div class="field">
+        <label for="reg">Register number</label>
+        <input id="reg" type="number" min="1" inputmode="numeric" placeholder="e.g. 106">
+      </div>
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" type="text" maxlength="30" placeholder="e.g. Meena">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="dept">Department</label>
+          <select id="dept">
+            <option>CSE</option><option>IT</option><option>AIDS</option>
+            <option>ECE</option><option>EEE</option><option>MECH</option><option>CIVIL</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cgpa">CGPA</label>
+          <input id="cgpa" type="number" min="0" max="10" step="0.01" placeholder="8.75">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btnInsert">Insert</button>
+        <button class="btn" id="btnUpdate">Update</button>
+        <button class="btn" id="btnSearch">Search</button>
+        <button class="btn danger" id="btnDelete">Delete</button>
+      </div>
+      <p class="hint">Search and Delete need only the register number. Click any node in the tree to load its record here.</p>
+    </section>
+
+    <section class="card">
+      <h2>Tree facts</h2>
+      <dl class="stats" id="stats"></dl>
+    </section>
+  </aside>
+
+  <section>
+    <div class="card tree-card">
+      <div class="tree-head">
+        <h2 id="treeTitle">AVL tree</h2>
+        <div class="status" id="status" aria-live="polite"></div>
+      </div>
+      <div class="legend" aria-label="Legend">
+        <span><i class="dot" style="background:var(--pine)"></i>CGPA 9 and above</span>
+        <span><i class="dot" style="background:var(--sage)"></i>8 to 8.99</span>
+        <span><i class="dot" style="background:var(--mist);border:1px solid var(--muted)"></i>Below 8</span>
+        <span><i class="dot" style="background:var(--coral)"></i>Balance factor outside -1 to 1</span>
+      </div>
+      <div class="canvas" id="canvas"></div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Tree operations">
+      <button role="tab" aria-selected="true" data-tab="trav">Traversals</button>
+      <button role="tab" aria-selected="false" data-tab="heap">Top CGPA (Heap)</button>
+      <button role="tab" aria-selected="false" data-tab="trie">Name search (Trie)</button>
+      <button role="tab" aria-selected="false" data-tab="hash">Hash table</button>
+      <button role="tab" aria-selected="false" data-tab="dij">Shortest path (Dijkstra)</button>
+      <button role="tab" aria-selected="false" data-tab="log">Operation log</button>
+    </div>
+
+    <div class="panel" id="p-trav" role="tabpanel">
+      <h3>Traversals</h3>
+      <p class="sub">Press Play to see the visit order light up on the tree above.</p>
+      <div id="travBody"></div>
+    </div>
+
+    <div class="panel" id="p-heap" role="tabpanel" hidden>
+      <h3>Highest CGPA using a max-heap</h3>
+      <p class="sub">The student with the best CGPA always sits at index 0. Ranks below are taken by repeatedly removing the top.</p>
+      <div id="heapBody"></div>
+    </div>
+
+    <div class="panel" id="p-trie" role="tabpanel" hidden>
+      <h3>Find students by name prefix</h3>
+      <p class="sub" id="trieSub"></p>
+      <div class="search-box">
+        <input id="prefix" type="search" placeholder="Type the first letters of a name" aria-label="Name prefix" autocomplete="off">
+      </div>
+      <ul class="matches" id="trieBody"></ul>
+    </div>
+
+    <div class="panel" id="p-hash" role="tabpanel" hidden>
+      <h3>Hash table on register number</h3>
+      <p class="sub">A hash function turns a register number into a bucket index, so lookup is O(1) on average.</p>
+      <div class="hctl">
+        <label for="hsSize">Table size</label>
+        <select id="hsSize"><option>7</option><option>11</option><option>13</option></select>
+        <div class="seg" role="group" aria-label="Collision method">
+          <button id="hsChain" aria-pressed="true">Chaining</button>
+          <button id="hsProbe" aria-pressed="false">Linear probing</button>
+        </div>
+        <input id="hsLook" type="number" min="1" placeholder="Reg number" aria-label="Register number to look up">
+        <button class="btn small" id="hsGo">Look up</button>
+      </div>
+      <p class="fn" id="hsFn"></p>
+      <div class="buckets" id="hsBody"></div>
+      <p class="hint" id="hsNote"></p>
+    </div>
+
+    <div class="panel" id="p-dij" role="tabpanel" hidden>
+      <h3>Dijkstra's shortest path</h3>
+      <p class="sub">Campus map. Numbers on the lines are walking minutes. Each step settles the closest unsettled place.</p>
+      <div class="hctl">
+        <label for="djSrc">From</label><select id="djSrc"></select>
+        <label for="djDst">To</label><select id="djDst"></select>
+        <button class="btn primary small" id="djPlay">Play</button>
+        <button class="btn small" id="djStep">Next step</button>
+        <button class="btn small" id="djReset">Reset</button>
+      </div>
+      <p class="fn" id="djMsg"></p>
+      <div id="djBody"></div>
+    </div>
+
+    <div class="panel" id="p-log" role="tabpanel" hidden>
+      <h3>Operation log</h3>
+      <p class="sub">Every insert, delete and AVL rotation is recorded here. Newest first.</p>
+      <ul class="log" id="logBody"></ul>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ---------- Data structures ---------- */
+class Node{constructor(s){this.s=s;this.l=null;this.r=null;this.h=1}}
+const H=n=>n?n.h:0;
+const upd=n=>{n.h=1+Math.max(H(n.l),H(n.r))};
+const bf=n=>n?H(n.l)-H(n.r):0;
+
+function rotR(y){const x=y.l;y.l=x.r;x.r=y;upd(y);upd(x);return x}
+function rotL(x){const y=x.r;x.r=y.l;y.l=x;upd(x);upd(y);return y}
+
+function rebalance(n,log){
+  upd(n);
+  const b=bf(n);
+  if(b>1){
+    if(bf(n.l)<0){log.push(`LR rotation at ${n.s.reg}`);n.l=rotL(n.l)}
+    else log.push(`LL rotation at ${n.s.reg}`);
+    return rotR(n);
+  }
+  if(b<-1){
+    if(bf(n.r)>0){log.push(`RL rotation at ${n.s.reg}`);n.r=rotR(n.r)}
+    else log.push(`RR rotation at ${n.s.reg}`);
+    return rotL(n);
+  }
+  return n;
+}
+/* One insert / delete used for both trees. bal=true makes it an AVL tree. */
+function insert(n,s,bal,log){
+  if(!n)return new Node(s);
+  if(s.reg<n.s.reg)n.l=insert(n.l,s,bal,log);
+  else n.r=insert(n.r,s,bal,log);
+  if(bal)return rebalance(n,log);
+  upd(n);return n;
+}
+function remove(n,reg,bal,log){
+  if(!n)return null;
+  if(reg<n.s.reg)n.l=remove(n.l,reg,bal,log);
+  else if(reg>n.s.reg)n.r=remove(n.r,reg,bal,log);
+  else{
+    if(!n.l||!n.r)return n.l||n.r;
+    let m=n.r;while(m.l)m=m.l;
+    n.s=m.s;
+    n.r=remove(n.r,m.s.reg,bal,log);
+  }
+  if(bal)return rebalance(n,log);
+  upd(n);return n;
+}
+function searchPath(root,reg){
+  const path=[];let n=root;
+  while(n){path.push(n.s.reg);if(reg===n.s.reg)return{path,found:true};n=reg<n.s.reg?n.l:n.r}
+  return{path,found:false};
+}
+function inorder(n,o=[]){if(n){inorder(n.l,o);o.push(n.s.reg);inorder(n.r,o)}return o}
+function preorder(n,o=[]){if(n){o.push(n.s.reg);preorder(n.l,o);preorder(n.r,o)}return o}
+function postorder(n,o=[]){if(n){postorder(n.l,o);postorder(n.r,o);o.push(n.s.reg)}return o}
+function levelorder(root){
+  const o=[],q=root?[root]:[];
+  while(q.length){const n=q.shift();o.push(n.s.reg);if(n.l)q.push(n.l);if(n.r)q.push(n.r)}
+  return o;
+}
+function isBalanced(n){return !n||(Math.abs(bf(n))<=1&&isBalanced(n.l)&&isBalanced(n.r))}
+
+/* Max-heap on CGPA */
+function buildHeap(list){
+  const a=[];
+  list.forEach(s=>{
+    a.push(s);let i=a.length-1;
+    while(i>0){const p=(i-1)>>1;if(a[p].cgpa>=a[i].cgpa)break;[a[p],a[i]]=[a[i],a[p]];i=p}
+  });
+  return a;
+}
+function topK(heap,k){
+  const h=heap.slice(),out=[];
+  while(h.length&&out.length<k){
+    out.push(h[0]);
+    const last=h.pop();
+    if(h.length){
+      h[0]=last;let i=0;
+      for(;;){
+        let l=2*i+1,r=l+1,m=i;
+        if(l<h.length&&h[l].cgpa>h[m].cgpa)m=l;
+        if(r<h.length&&h[r].cgpa>h[m].cgpa)m=r;
+        if(m===i)break;
+        [h[m],h[i]]=[h[i],h[m]];i=m;
+      }
+    }
+  }
+  return out;
+}
+
+/* Trie on names */
+function buildTrie(list){
+  const root={c:{},s:[]};let count=1;
+  list.forEach(s=>{
+    let n=root;
+    for(const ch of s.name.toLowerCase()){
+      if(!n.c[ch]){n.c[ch]={c:{},s:[]};count++}
+      n=n.c[ch];
+    }
+    n.s.push(s);
+  });
+  return{root,count};
+}
+function trieSearch(trie,prefix){
+  let n=trie.root;
+  for(const ch of prefix.toLowerCase()){n=n.c[ch];if(!n)return[]}
+  const out=[];
+  (function walk(x){x.s.forEach(s=>out.push(s));Object.keys(x.c).sort().forEach(k=>walk(x.c[k]))})(n);
+  return out;
+}
+
+/* ---------- App state ---------- */
+const state={
+  mode:'avl',bst:null,avl:null,
+  students:new Map(),
+  visited:new Set(),current:null,kind:null,found:null,fresh:null,
+  log:[],lastRotation:''
+};
+let timer=null,toastTimer=null;
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const root=()=>state.mode==='avl'?state.avl:state.bst;
+
+function toast(msg){
+  const t=$('toast');t.textContent=msg;t.classList.add('on');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('on'),2400);
+}
+function addLog(text,kind=''){state.log.unshift({text,kind})}
+function showError(msg){const e=$('err');e.textContent=msg;e.classList.toggle('on',!!msg)}
+
+/* ---------- Operations ---------- */
+function readForm(needAll){
+  const reg=parseInt($('reg').value,10);
+  const name=$('name').value.trim();
+  const dept=$('dept').value;
+  const cgpa=parseFloat($('cgpa').value);
+  if(!Number.isInteger(reg)||reg<=0)return{err:'Enter a register number greater than 0.'};
+  if(!needAll)return{reg};
+  if(!name)return{err:'Enter the student name.'};
+  if(!/^[A-Za-z][A-Za-z .]*$/.test(name))return{err:'Name can contain letters, spaces and dots only.'};
+  if(Number.isNaN(cgpa)||cgpa<0||cgpa>10)return{err:'CGPA must be a number from 0 to 10.'};
+  return{reg,name,dept,cgpa:Math.round(cgpa*100)/100};
+}
+
+function addStudent(s,logRot=true){
+  const log=[];
+  state.students.set(s.reg,s);
+  state.bst=insert(state.bst,s,false,[]);
+  state.avl=insert(state.avl,s,true,log);
+  addLog(`Inserted ${s.reg} ${s.name}`);
+  log.forEach(r=>addLog(`AVL: ${r}`,'rot'));
+  if(log.length)state.lastRotation=log[log.length-1];
+  return log;
+}
+
+function doInsert(){
+  const f=readForm(true);
+  if(f.err)return showError(f.err);
+  if(state.students.has(f.reg))return showError(`Register number ${f.reg} already exists. Use Update to change it.`);
+  showError('');
+  state.lastRotation='';
+  const rots=addStudent({reg:f.reg,name:f.name,dept:f.dept,cgpa:f.cgpa});
+  state.fresh=f.reg;
+  commit();
+  toast(rots.length?`Inserted ${f.reg}. AVL fixed it with ${rots.join(', ')}`:`Inserted ${f.name} (${f.reg})`);
+}
+function doUpdate(){
+  const f=readForm(true);
+  if(f.err)return showError(f.err);
+  const s=state.students.get(f.reg);
+  if(!s)return showError(`Register number ${f.reg} is not in the tree. Use Insert to add it.`);
+  showError('');
+  s.name=f.name;s.dept=f.dept;s.cgpa=f.cgpa;
+  addLog(`Updated ${s.reg} ${s.name}`);
+  commit();toast(`Updated ${s.name}`);
+}
+function doDelete(){
+  const f=readForm(false);
+  if(f.err)return showError(f.err);
+  const s=state.students.get(f.reg);
+  if(!s)return showError(`Register number ${f.reg} is not in the tree.`);
+  showError('');
+  const log=[];
+  state.students.delete(f.reg);
+  state.bst=remove(state.bst,f.reg,false,[]);
+  state.avl=remove(state.avl,f.reg,true,log);
+  addLog(`Deleted ${s.reg} ${s.name}`,'del');
+  log.forEach(r=>addLog(`AVL: ${r}`,'rot'));
+  state.lastRotation=log.length?log[log.length-1]:'';
+  commit();
+  toast(log.length?`Deleted ${s.name}. AVL fixed it with ${log.join(', ')}`:`Deleted ${s.name}`);
+}
+function doSearch(){
+  const f=readForm(false);
+  if(f.err)return showError(f.err);
+  showError('');
+  const {path,found}=searchPath(root(),f.reg);
+  const steps=path.length;
+  play(path,'search',()=>{
+    if(found){
+      state.found=f.reg;
+      const s=state.students.get(f.reg);
+      $('name').value=s.name;$('dept').value=s.dept;$('cgpa').value=s.cgpa;
+      toast(`Found ${s.name} (${s.dept}, CGPA ${s.cgpa.toFixed(2)}) after ${steps} comparison${steps===1?'':'s'}`);
+    }else{
+      toast(`${f.reg} not found. Checked ${steps} node${steps===1?'':'s'}`);
+    }
+    renderTree();
+  });
+  addLog(`Searched ${f.reg}: ${found?'found':'not found'} in ${steps} step${steps===1?'':'s'}`);
+  renderLog();
+}
+function clearAll(){
+  if(!state.students.size)return;
+  state.students.clear();state.bst=null;state.avl=null;state.lastRotation='';
+  addLog('Cleared all records','del');commit();toast('All records cleared');
+}
+const SAMPLE=[
+  [103,'Arun','CSE',8.5],[101,'Priya','IT',9.2],[105,'Kavi','ECE',8.9],
+  [102,'Ram','CSE',7.8],[104,'Devi','AIDS',9.5]
+];
+const SORTED=[
+  [201,'Meena','CSE',8.1],[202,'Suresh','IT',7.4],[203,'Lakshmi','ECE',9.0],
+  [204,'Karthik','EEE',8.6],[205,'Divya','AIDS',9.3],[206,'Vijay','MECH',7.9],[207,'Nithya','CSE',8.8]
+];
+function loadSet(set,label){
+  state.lastRotation='';
+  let added=0;
+  set.forEach(([reg,name,dept,cgpa])=>{
+    if(!state.students.has(reg)){addStudent({reg,name,dept,cgpa});added++}
+  });
+  if(!added)return toast('Those sample records are already loaded');
+  commit();
+  toast(label);
+}
+
+/* ---------- Animation ---------- */
+function play(seq,kind,done){
+  clearTimeout(timer);
+  state.visited=new Set();state.current=null;state.kind=kind;state.found=null;state.fresh=null;
+  let i=0;
+  const step=()=>{
+    if(i>=seq.length){
+      if(done)done();
+      timer=setTimeout(clearMarks,2600);
+      return;
+    }
+    state.current=seq[i];state.visited.add(seq[i]);i++;
+    renderTree();renderTrav();
+    timer=setTimeout(step,480);
+  };
+  step();
+}
+function clearMarks(){
+  clearTimeout(timer);
+  state.visited=new Set();state.current=null;state.kind=null;state.found=null;
+  renderTree();renderTrav();
+}
+function commit(){
+  clearTimeout(timer);
+  state.visited=new Set();state.current=null;state.kind=null;state.found=null;
+  renderAll();
+  state.fresh=null;
+}
+
+/* ---------- Rendering ---------- */
+function layout(r){
+  let i=0;const pos=new Map();
+  (function go(n,d){if(!n)return;go(n.l,d+1);pos.set(n,{x:i++,y:d});go(n.r,d+1)})(r,0);
+  return pos;
+}
+function renderTree(){
+  const r=root();
+  $('treeTitle').textContent=state.mode==='avl'?'AVL tree':'Binary search tree';
+  if(!r){
+    $('canvas').innerHTML=`<div class="empty"><h3>No students yet</h3><p>Fill in the form and press Insert, or load a sample to see the tree grow.</p></div>`;
+    $('status').innerHTML='Empty tree';
+    return;
+  }
+  const pos=layout(r);
+  const GX=66,GY=96,PAD=46;
+  let maxD=0;pos.forEach(p=>{if(p.y>maxD)maxD=p.y});
+  const W=Math.max(620,(pos.size-1)*GX+PAD*2);
+  const Ht=maxD*GY+PAD*2+34;
+  const X=n=>PAD+pos.get(n).x*GX+(W-(pos.size-1)*GX-PAD*2)/2;
+  const Y=n=>PAD+pos.get(n).y*GY;
+  let edges='',nodes='';
+  (function draw(n){
+    if(!n)return;
+    [n.l,n.r].forEach(c=>{
+      if(!c)return;
+      const hot=state.visited.has(n.s.reg)&&state.visited.has(c.s.reg)?' hot':'';
+      edges+=`<line class="edge${hot}" x1="${X(n)}" y1="${Y(n)}" x2="${X(c)}" y2="${Y(c)}"/>`;
+      draw(c);
+    });
+  })(r);
+  pos.forEach((p,n)=>{
+    const s=n.s,x=X(n),y=Y(n);
+    const band=s.cgpa>=9?'hi':s.cgpa>=8?'mid':'lo';
+    let cls=`node ${band}`;
+    if(state.visited.has(s.reg))cls+=' seen';
+    if(state.current===s.reg)cls+=' now';
+    if(state.found===s.reg)cls+=' found';
+    if(state.fresh===s.reg)cls+=' fresh';
+    const b=bf(n),bad=Math.abs(b)>1?' bad':'';
+    const fs=String(s.reg).length>4?12:16;
+    const nm=s.name.length>9?s.name.slice(0,8)+'…':s.name;
+    nodes+=`<g class="${cls}" data-reg="${s.reg}" tabindex="0" role="button" aria-label="Student ${s.reg} ${esc(s.name)}, CGPA ${s.cgpa}, balance ${b}">
+      <title>${s.reg} · ${esc(s.name)} · ${esc(s.dept)} · CGPA ${s.cgpa.toFixed(2)}</title>
+      <circle class="body" cx="${x}" cy="${y}" r="25" fill="#fff"/>
+      <text class="reg" x="${x}" y="${y+5}" text-anchor="middle" font-size="${fs}">${s.reg}</text>
+      <text class="nm" x="${x}" y="${y+43}" text-anchor="middle">${esc(nm)}</text>
+      <g class="bf${bad}"><rect x="${x+14}" y="${y-36}" width="26" height="17" rx="8"/><text x="${x+27}" y="${y-23.5}" text-anchor="middle">${b>0?'+'+b:b}</text></g>
+    </g>`;
+  });
+  $('canvas').innerHTML=`<svg width="${W}" height="${Ht}" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Tree diagram">${edges}${nodes}</svg>`;
+
+  const balanced=isBalanced(r);
+  const rot=state.lastRotation?` · last fix: <b>${esc(state.lastRotation)}</b>`:'';
+  $('status').innerHTML=`Height <b>${H(r)}</b> · ${balanced?'<b>balanced</b>':'<b style="color:var(--coral)">not balanced</b>'}${state.mode==='avl'?rot:''}`;
+}
+function renderStats(){
+  const r=root(),n=state.students.size;
+  const regs=inorder(r);
+  const trie=buildTrie([...state.students.values()]);
+  const items=[
+    ['Students',n],['Height',H(r)],
+    ['Root',r?r.s.reg:'-'],['Leaf nodes',countLeaves(r)],
+    ['Smallest reg',regs.length?regs[0]:'-'],['Largest reg',regs.length?regs[regs.length-1]:'-'],
+    ['BST height',H(state.bst)],['AVL height',H(state.avl)],
+    ['Trie nodes',trie.count]
+  ];
+  $('stats').innerHTML=items.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+}
+function countLeaves(n){if(!n)return 0;if(!n.l&&!n.r)return 1;return countLeaves(n.l)+countLeaves(n.r)}
+
+const TRAV=[
+  ['inorder','Inorder','Left, Root, Right',inorder],
+  ['preorder','Preorder','Root, Left, Right',preorder],
+  ['postorder','Postorder','Left, Right, Root',postorder],
+  ['level','Level order','Level by level',levelorder]
+];
+function renderTrav(){
+  const r=root();
+  $('travBody').innerHTML=TRAV.map(([k,title,sub,fn])=>{
+    const seq=r?fn(r):[];
+    const chips=seq.length?seq.map(g=>{
+      let c='chip';
+      if(state.kind===k&&state.visited.has(g))c+=' on';
+      if(state.kind===k&&state.current===g)c+=' now';
+      return `<span class="${c}">${g}</span>`;
+    }).join(''):'<span class="none">Insert students to see the order</span>';
+    return `<div class="trav"><div><b>${title}</b><small>${sub}</small></div><div class="chips">${chips}</div>
+      <button class="btn small" data-play="${k}" ${seq.length?'':'disabled'}>Play</button></div>`;
+  }).join('');
+}
+function renderHeap(){
+  const list=[...state.students.values()];
+  if(!list.length){$('heapBody').innerHTML='<p class="none">Insert students to build the heap.</p>';return}
+  const heap=buildHeap(list);
+  const top=heap[0];
+  const rank=topK(heap,Math.min(5,heap.length));
+  $('heapBody').innerHTML=`
+    <div class="top1"><div class="big">${top.cgpa.toFixed(2)}</div>
+      <div><p><b>${esc(top.name)}</b> · Reg ${top.reg}</p><small>${esc(top.dept)} · highest CGPA, found in O(1) at the heap root</small></div></div>
+    <ol class="rank">${rank.map((s,i)=>`<li><span class="pos">#${i+1}</span>
+      <div><b>${esc(s.name)}</b> <span class="tag">${esc(s.dept)}</span><div class="bar"><i style="width:${s.cgpa*10}%"></i></div></div>
+      <b>${s.cgpa.toFixed(2)}</b></li>`).join('')}</ol>
+    <p class="sub" style="margin-bottom:8px">Heap as an array. The parent of index i sits at (i - 1) / 2.</p>
+    <div class="heaparr">${heap.map((s,i)=>`<div><span>[${i}]</span><b>${s.cgpa.toFixed(2)}</b><span>${esc(s.name)}</span></div>`).join('')}</div>`;
+}
+function renderTrie(){
+  const list=[...state.students.values()];
+  const trie=buildTrie(list);
+  $('trieSub').textContent=`The trie holds ${list.length} name${list.length===1?'':'s'} in ${trie.count} nodes. Searching costs O(length of prefix), no matter how many students exist.`;
+  const p=$('prefix').value.trim();
+  const body=$('trieBody');
+  if(!list.length){body.innerHTML='<li class="none">Insert students to build the trie.</li>';return}
+  const res=p?trieSearch(trie,p):list.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  if(!res.length){body.innerHTML=`<li class="none">No name starts with "${esc(p)}". Try fewer letters.</li>`;return}
+  body.innerHTML=res.map(s=>{
+    const n=esc(s.name),k=p.length;
+    const shown=p?`<mark>${esc(s.name.slice(0,k))}</mark>${esc(s.name.slice(k))}`:n;
+    return `<li><span><b>${shown}</b> <span class="tag">${esc(s.dept)}</span></span><span>Reg ${s.reg} · CGPA ${s.cgpa.toFixed(2)}</span></li>`;
+  }).join('');
+}
+function renderLog(){
+  $('logBody').innerHTML=state.log.length
+    ?state.log.map(l=>`<li class="${l.kind}">${esc(l.text)}</li>`).join('')
+    :'<li class="none">Nothing yet. Insert a student to begin.</li>';
+}
+function renderAll(){renderTree();renderStats();renderTrav();renderHeap();renderTrie();renderHash();renderDij();renderLog()}
+
+/* ---------- Events ---------- */
+$('btnInsert').onclick=doInsert;
+$('btnUpdate').onclick=doUpdate;
+$('btnDelete').onclick=doDelete;
+$('btnSearch').onclick=doSearch;
+$('clearAll').onclick=clearAll;
+$('loadSample').onclick=()=>loadSet(SAMPLE,'Loaded 5 sample students');
+$('loadSorted').onclick=()=>loadSet(SORTED,'Loaded sorted records. Switch between AVL and BST to compare');
+['reg','name','cgpa'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')doInsert()}));
+
+function setMode(m){
+  state.mode=m;
+  $('modeAvl').setAttribute('aria-pressed',m==='avl');
+  $('modeBst').setAttribute('aria-pressed',m==='bst');
+  clearMarks();renderStats();
+}
+$('modeAvl').onclick=()=>setMode('avl');
+$('modeBst').onclick=()=>setMode('bst');
+
+$('travBody').addEventListener('click',e=>{
+  const b=e.target.closest('[data-play]');if(!b)return;
+  const t=TRAV.find(x=>x[0]===b.dataset.play);
+  play(t[3](root()),t[0]);
+});
+function pickNode(e){
+  const g=e.target.closest('[data-reg]');if(!g)return;
+  if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;
+  const s=state.students.get(+g.dataset.reg);if(!s)return;
+  $('reg').value=s.reg;$('name').value=s.name;$('dept').value=s.dept;$('cgpa').value=s.cgpa;
+  showError('');
+}
+$('canvas').addEventListener('click',pickNode);
+$('canvas').addEventListener('keydown',pickNode);
+$('prefix').addEventListener('input',renderTrie);
+
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  ['trav','heap','trie','hash','dij','log'].forEach(k=>$('p-'+k).hidden=(k!==b.dataset.tab));
+});
+
+/* ---------- Hash table ---------- */
+const hs={size:7,mode:'chain',look:null};
+function buildHash(list,size,mode){
+  const t=Array.from({length:size},()=>[]);let coll=0,over=0;
+  list.forEach(s=>{
+    const i=s.reg%size;
+    if(mode==='chain'){if(t[i].length)coll++;t[i].push(s);return}
+    let k=0;while(k<size&&t[(i+k)%size].length)k++;
+    if(k===size){over++;return}
+    if(k>0)coll++;
+    t[(i+k)%size].push(s);
+  });
+  return{t,coll,over};
+}
+function renderHash(){
+  const list=[...state.students.values()],{size,mode}=hs;
+  const {t,coll,over}=buildHash(list,size,mode);
+  const hit=new Set();let note='';
+  if(hs.look!=null){
+    const i=hs.look%size;let cmp=0,found=false;
+    if(mode==='chain'){hit.add(i);for(const s of t[i]){cmp++;if(s.reg===hs.look){found=true;break}}}
+    else for(let k=0;k<size;k++){const j=(i+k)%size;hit.add(j);if(!t[j].length)break;cmp++;if(t[j][0].reg===hs.look){found=true;break}}
+    note=`hash(${hs.look}) = ${hs.look} mod ${size} = ${i}. ${found?'Found':'Not found'} after checking ${cmp} entr${cmp===1?'y':'ies'}.`;
+  }
+  $('hsFn').textContent=`hash(reg) = reg mod ${size}`;
+  $('hsBody').innerHTML=t.map((b,i)=>{
+    const c=(mode==='chain'?b.length>1:b.length&&b[0].reg%size!==i)?' col':'';
+    const items=b.length?b.map(s=>`<div class="it"><b>${s.reg}</b> ${esc(s.name)}${mode==='probe'&&s.reg%size!==i?` <small>home ${s.reg%size}</small>`:''}</div>`).join(''):'<div class="it"><small>empty</small></div>';
+    return `<div class="bk${c}${hit.has(i)?' hit':''}"><div class="ix">[${i}]</div>${items}</div>`;
+  }).join('');
+  const lf=(list.length/size).toFixed(2);
+  $('hsNote').innerHTML=(note?`<b>${note}</b><br>`:'')+`Load factor ${lf} · collisions ${coll}${over?` · <b style="color:var(--coral)">${over} record(s) did not fit, table is full</b>`:''}. Red buckets show a collision.`;
+}
+$('hsSize').onchange=e=>{hs.size=+e.target.value;renderHash()};
+function setHs(m){hs.mode=m;$('hsChain').setAttribute('aria-pressed',m==='chain');$('hsProbe').setAttribute('aria-pressed',m==='probe');renderHash()}
+$('hsChain').onclick=()=>setHs('chain');
+$('hsProbe').onclick=()=>setHs('probe');
+$('hsGo').onclick=()=>{const v=parseInt($('hsLook').value,10);hs.look=Number.isInteger(v)&&v>0?v:null;renderHash()};
+$('hsLook').addEventListener('keydown',e=>{if(e.key==='Enter')$('hsGo').click()});
+
+/* ---------- Dijkstra ---------- */
+const GN={Gate:[60,150],Library:[190,55],Canteen:[190,245],CSE:[350,55],Hostel:[350,245],Lab:[510,70],Hall:[510,230]};
+const GE=[['Gate','Library',4],['Gate','Canteen',2],['Canteen','Library',1],['Library','CSE',5],['Canteen','Hostel',8],['CSE','Hostel',3],['CSE','Lab',4],['Lab','Hall',2],['Hostel','Hall',6]];
+const dj={src:'Gate',dst:'Hall',step:0,t:null};
+function dijkstra(src){
+  const names=Object.keys(GN),dist={},prev={},done=new Set(),steps=[];
+  names.forEach(n=>dist[n]=Infinity);dist[src]=0;
+  while(done.size<names.length){
+    let u=null;names.forEach(n=>{if(!done.has(n)&&(u===null||dist[n]<dist[u]))u=n});
+    if(dist[u]===Infinity)break;
+    done.add(u);const rel=[];
+    GE.forEach(([a,b,w])=>{
+      const v=a===u?b:b===u?a:null;
+      if(v&&!done.has(v)&&dist[u]+w<dist[v]){dist[v]=dist[u]+w;prev[v]=u;rel.push(`${v} = ${dist[v]}`)}
+    });
+    steps.push({u,d:{...dist},p:{...prev},rel,done:new Set(done)});
+  }
+  return steps;
+}
+function renderDij(){
+  const steps=dijkstra(dj.src),k=dj.step,cur=k?steps[k-1]:null,fin=k===steps.length;
+  let path=[];
+  if(fin){let n=dj.dst;while(n){path.unshift(n);n=cur.p[n]}if(path[0]!==dj.src)path=[]}
+  const onP=(a,b)=>path.some((x,i)=>i<path.length-1&&((x===a&&path[i+1]===b)||(x===b&&path[i+1]===a)));
+  const edges=GE.map(([a,b,w])=>{const[x1,y1]=GN[a],[x2,y2]=GN[b];
+    return `<line class="de${onP(a,b)?' path':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><text class="dw" x="${(x1+x2)/2}" y="${(y1+y2)/2-7}">${w}</text>`}).join('');
+  const nodes=Object.keys(GN).map(n=>{
+    const[x,y]=GN[n];let c='dn';
+    if(cur&&cur.done.has(n))c+=' done';
+    if(cur&&cur.u===n&&!fin)c+=' cur';
+    if(fin&&path.includes(n))c+=' end';
+    const d=cur&&isFinite(cur.d[n])?cur.d[n]:'∞';
+    return `<g class="${c}"><circle cx="${x}" cy="${y}" r="28"/><text class="t" x="${x}" y="${y+4}">${n}</text><text class="d" x="${x}" y="${y+46}">${d}</text></g>`}).join('');
+  const rows=Object.keys(GN).map(n=>`<tr><td>${n}</td><td>${cur&&isFinite(cur.d[n])?cur.d[n]:'∞'}</td><td>${cur&&cur.p[n]?cur.p[n]:'-'}</td></tr>`).join('');
+  $('djBody').innerHTML=`<svg class="dsvg" viewBox="0 0 570 310" role="img" aria-label="Campus graph">${edges}${nodes}</svg>
+    <table class="dtab"><tr><th>Place</th><th>Distance (min)</th><th>Came from</th></tr>${rows}</table>`;
+  $('djMsg').textContent=!cur?`Press Play or Next step. Start at ${dj.src}, distance 0, all others ∞.`
+    :fin?(path.length?`Shortest ${dj.src} to ${dj.dst}: ${path.join(' → ')}, ${cur.d[dj.dst]} minutes.`:`${dj.dst} cannot be reached.`)
+    :`Settled ${cur.u} at ${cur.d[cur.u]} min. ${cur.rel.length?'Shorter routes found: '+cur.rel.join(', ')+'.':'No shorter routes found.'}`;
+}
+(function(){
+  const opts=Object.keys(GN).map(n=>`<option>${n}</option>`).join('');
+  $('djSrc').innerHTML=opts;$('djDst').innerHTML=opts;
+  $('djSrc').value=dj.src;$('djDst').value=dj.dst;
+})();
+const djN=()=>dijkstra(dj.src).length;
+$('djSrc').onchange=e=>{clearInterval(dj.t);dj.src=e.target.value;dj.step=0;renderDij()};
+$('djDst').onchange=e=>{dj.dst=e.target.value;renderDij()};
+$('djPlay').onclick=()=>{clearInterval(dj.t);dj.step=0;renderDij();
+  dj.t=setInterval(()=>{if(dj.step>=djN()){clearInterval(dj.t);return}dj.step++;renderDij()},900)};
+$('djStep').onclick=()=>{clearInterval(dj.t);if(dj.step<djN())dj.step++;renderDij()};
+$('djReset').onclick=()=>{clearInterval(dj.t);dj.step=0;renderDij()};
+
+renderAll();
+</script>
+</body>
+</html>
